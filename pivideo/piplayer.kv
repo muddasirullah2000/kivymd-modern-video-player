@@ -1,0 +1,337 @@
+<PiPlayerButtonBox>:
+    size_hint: 1, None
+    width: self.parent.width  # Ensure it matches the parent's width
+
+    MDBoxLayout:
+        orientation: 'vertical'
+        size_hint: 1, None
+        spacing: '16dp'  # Add vertical spacing of 10dp between items
+
+        PiSlideBox:
+            orientation: 'horizontal'
+            adaptive_height: True
+            padding: ('0dp', '0dp', '0dp', '42dp')
+
+            MDLabel:
+                id: start_time
+                text: '00:00:00'
+                adaptive_height: True
+                text_size: None, None
+                theme_text_color: 'Custom'
+                text_color: [1, 1, 1, 1]
+                font_name: 'SF-Pro'
+                font_size: '14dp'
+                halign: 'left'
+                size_hint: None, None
+
+            MDBoxLayout:
+                id: progress_container
+                size_hint_x: 1
+                padding: (0, 0, 0, '5dp')  # Add margin bottom of 10dp
+
+                PiProgressBarVideo:
+                    id: ProgressBarVideo
+                    video: root.parent
+                    track_color_inactive: [0.3, 0.3, 0.3, 1]
+                    color: [0.886, 0.071, 0.129, 1]
+                    thumb_color_inactive: [1, 1, 1, 1]
+                    thumb_color_active: [1, 1, 1, 1]
+                    track_color_active: [0.3, 0.3, 0.3, 1]
+                    hint: True
+                    hint_text_color: [1, 1, 1, 1]
+                    hint_bg_color: [0.886, 0.071, 0.129, 1]
+                    hint_radius: [10, 10, 10, 10]
+                    pos_hint: {'center_y': 0.5}
+                    value: root.parent.position if root.parent else 0
+                    max: max(root.parent.duration, 1)  # Avoids division by zero
+                    radius: [3, 3, 3, 3]
+                    padding: 0
+
+                    on_value:
+                        root.parent.set_time()  # Ensure this updates video position correctly
+
+            MDLabel:
+                id: end_time
+                text: '00:00:00'
+                adaptive_height: True
+                text_size: None, None
+                theme_text_color: 'Custom'
+                text_color: [1, 1, 1, 1]
+                font_name: 'SF-Pro'
+                font_size: '14dp'
+                halign: 'right'
+                size_hint: None, None
+
+        PiControlsBox:
+            # orientation: 'horizontal'
+            cols: 3
+            spacing: '16dp'
+            adaptive_height: True
+            padding: ('7dp', '0dp', '0dp', '12dp')
+
+#======================== Bottom Left Controls ========================
+            MDAnchorLayout:
+                anchor_x: 'left'
+                anchor_y: 'center'
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    spacing: '16dp'
+                    size_hint_x: None
+                    width: self.minimum_width
+
+                    ButtonControlsLock:
+                        id: BtnLock
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+                        
+                        # Toggle locked property on button press
+                        on_press: self.locked = not self.locked
+
+                        Image:
+                            id: BtnImage  # Ensure btn_image is directly inside ButtonControlsLock
+                            # Set the icon based on the value of 'locked'
+                            source: "controls/lock_close_icon.png" if self.parent.locked else "controls/lock_open_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '24dp', '29dp'
+
+                    ButtonControlsVolume:
+                        id: BtnVolume
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+                        
+                        # Initialize volume property
+                        volume: 1
+
+                        # Toggle volume and icon on button press
+                        on_press:
+                            self.volume = 0 if self.volume == 1 else 1  # Toggle between 0% and 100%
+                            root.parent.volume = self.volume            # Set video volume
+
+                        Image:
+                            id: BtnVolumeImage  # Ensure btn_image is directly inside ButtonControlsLock
+                            # Set the icon based on the value of 'locked'
+                            source: "controls/volume_mute_icon.png" if self.parent.volume == 0 else ("controls/volume_50%_icon.png" if self.parent.volume == 0.5 else "controls/volume_100%_icon.png")
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '31dp', '24dp'
+
+                    MDBoxLayout:
+                        id: VolumeContainer
+                        size_hint_x: None
+                        width: root.width * 10 / 100
+                        padding: ('0dp', '0dp', '0dp', '50dp')
+
+                        MDSlider:
+                            track_color_inactive: [0.3, 0.3, 0.3, 1]
+                            color: [0.886, 0.071, 0.129, 1]
+                            thumb_color_inactive: [1, 1, 1, 1]
+                            thumb_color_active: [1, 1, 1, 1]
+                            track_color_active: [0.3, 0.3, 0.3, 1]
+                            hint: True
+                            hint_text_color: [1, 1, 1, 1]
+                            hint_bg_color: [0.886, 0.071, 0.129, 1]
+                            hint_radius: [10, 10, 10, 10]
+                            size_hint_y: None
+                            size: '0dp','10dp'
+                            pos_hint: {'center_y': 0.5}
+                            max: 100
+                            value: root.parent.volume * 100
+                            radius:[3, 3, 3, 3]
+                            padding: 0
+                            elevation: 0
+
+                            on_value: 
+                                root.parent.volume = self.value / 100
+                                BtnVolumeImage.source = ("controls/volume_mute_icon.png" if self.value == 0 else ("controls/volume_50%_icon.png" if 0 < self.value <= 50 else "controls/volume_100%_icon.png"))
+
+#======================== Bottom Center Controls ========================
+            MDAnchorLayout:
+                anchor_x: 'center'
+                anchor_y: 'center'
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    spacing: '16dp'
+                    size_hint_x: None
+                    width: self.minimum_width
+
+                    ButtonRewindFiveSecondsBack:
+                        id: BtnRewindFiveSecondBack
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+
+                        on_release: root.parent.rewind_5s()
+
+                        Image:
+                            id: RewindFiveSecondImage
+                            source: "controls/step_backword_5Frame_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '28dp', '28dp'
+
+                    ButtonRewindBack:
+                        id: BtnRewindBack
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+
+                        Image:
+                            id: RewindBackImage
+                            source: "controls/back_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '26dp', '26dp'
+
+                    ButtonVideoPlayPause:
+                        id: VideoPlayPause
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+                        
+                        # Toggle locked property on button press
+                        # on_press: self.locked = not self.locked
+
+                        Image:
+                            id: VideoPlayPauseImage  # Ensure btn_image is directly inside ButtonControlsLock
+                            # Set the icon based on the value of 'locked'
+                            source: "controls/play_icon.png" if root.parent.state == 'play' else 'controls/pause_icon.png'
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '28dp', '28dp'
+
+                    ButtonRewindBack:
+                        id: BtnRewindBack
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+                        
+                        # Toggle locked property on button press
+                        # on_press: self.locked = not self.locked
+
+                        Image:
+                            id: RewindBackImage  # Ensure btn_image is directly inside ButtonControlsLock
+                            # Set the icon based on the value of 'locked'
+                            source: "controls/next_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '26dp', '26dp'
+
+                    ButtonRewindFiveSecondsForward:
+                        id: BtnRewindFiveSecondsForward
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+
+                        # on_release:
+                        #     root.parent.rewind_five_second_forward()
+
+                        Image:
+                            id: RewindFiveSecondsForwardImage
+                            source: "controls/step_forword_5Frame_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '28dp', '28dp'
+
+#======================== Bottom Right Controls ========================
+            MDAnchorLayout:
+                anchor_x: 'right'
+                anchor_y: 'center'
+
+                MDBoxLayout:
+                    orientation: 'horizontal'
+                    spacing: '16dp'
+                    size_hint_x: None
+                    width: self.minimum_width
+
+                    ButtonDawnload:
+                        id: BtnDawnload
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+                        
+                        # Toggle locked property on button press
+                        # on_press: self.locked = not self.locked
+
+                        Image:
+                            id: DawnloadImage  # Ensure btn_image is directly inside ButtonControlsLock
+                            # Set the icon based on the value of 'locked'
+                            source: "controls/dawnload_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '24dp', '24dp'
+
+                    ButtonExitAndFullScreen:
+                        id: BtnExitAndFullScreen
+                        video: root.parent
+                        md_bg_color: [0, 0, 0, 0]
+                        theme_icon_color: "Custom"
+                        icon_color: [0, 0, 0, 0]
+                        size_hint: None, None  # Disable size hint to use exact size
+                        size: '32dp', '32dp'
+                        
+                        # Toggle locked property on button press
+                        # on_press: self.locked = not self.locked
+
+                        Image:
+                            id: ExitAndFullScreenImage  # Ensure btn_image is directly inside ButtonControlsLock
+                            # Set the icon based on the value of 'locked'
+                            source: "controls/full_screen_icon.png"
+                            center_x: self.parent.center_x
+                            center_y: self.parent.center_y
+                            size_hint: None, None
+                            size: '24dp', '24dp'
+
+
+
+<PiVideoPlayer>
+    container: container
+    on_duration: app.get_duration()
+
+    PiPlayerContainer:
+        id: container
+        md_bg_color: [0, 0, 0, 0]
+        size_hint: 1, 1
+        width: self.parent.width  # Ensure it matches the parent's width
+        height: self.parent.height  # Ensure it matches the parent's height
+
+    PiPlayerButtonBox:
+        id: button_box
+        video: root
+        

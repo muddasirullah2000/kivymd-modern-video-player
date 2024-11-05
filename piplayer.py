@@ -2,17 +2,13 @@ from kivymd.app import MDApp
 from kivy.lang import Builder
 from kivy.core.text import LabelBase
 from kivy.metrics import sp
-from kivy.uix.videoplayer import VideoPlayer, MDPiVideoPlayer
 from kivymd.uix.floatlayout import MDFloatLayout
-from kivy.graphics.svg import Svg
-from kivymd.uix.relativelayout import MDRelativeLayout
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.gridlayout import MDGridLayout
-from kivymd.uix.button import MDIconButton, BaseButton
-from kivymd.uix.progressbar import MDProgressBar
+from kivymd.uix.button import MDIconButton
 from kivymd.uix.slider import MDSlider
-from kivymd.uix.label import MDLabel
 from kivy.uix.video import Video
+from kivy.uix.videoplayer import VideoPlayer
 from kivy.properties import ObjectProperty, NumericProperty, BooleanProperty, StringProperty
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -21,19 +17,22 @@ from gradient import *
 # registering our new custom fontstyle
 LabelBase.register(name='SF-Pro', fn_regular='../Font/SF-Pro.ttf')
 
-# Window.size = (350, 600)
-
 Builder.load_file('piplayer.kv')
-
-#----------- Custom Gradient -----------
-
 
 #----------- ############## ------------
 
-class PiPlayerContainer(MDBoxLayout):
-    pass
+class PiPlayerContainer(MDGridLayout):
+    video = ObjectProperty(None)
 
-class PiPlayerButtonBox(MDFloatLayout):
+class PiControlsTopBox(MDFloatLayout):
+    video = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.shader_widget = ShaderWidget(fs=GLSL_CODE)
+        self.add_widget(self.shader_widget)
+
+class PiControlsBottomBox(MDFloatLayout):
     video = ObjectProperty(None)
 
     def __init__(self, **kwargs):
@@ -44,7 +43,7 @@ class PiPlayerButtonBox(MDFloatLayout):
 class PiControlsBox(MDGridLayout):
     video = ObjectProperty(None)
 
-class PiSlideBox(MDBoxLayout):
+class PiSliderBox(MDBoxLayout):
     video = ObjectProperty(None)
 
 class PiPlayerButtons(MDBoxLayout):
@@ -70,9 +69,16 @@ class PiProgressBarVideo(MDSlider):
 
 class PiBaseButtons(MDIconButton):
     video = ObjectProperty(None)
+    clock = ObjectProperty()
+    _fwd_position = NumericProperty(0)
+    _bwd_position = NumericProperty(0)
     theme_icon_color = "Custom"
     icon_color = "white"
     icon_size = sp(20)
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.clock = None
 
 class ButtonControlsLock(PiBaseButtons):
     locked = BooleanProperty(False)  # Define a Boolean property to track state
@@ -81,10 +87,30 @@ class ButtonControlsVolume(PiBaseButtons):
     volume = BooleanProperty(False)  # Define a Boolean property to track state
 
 class ButtonRewindFiveSecondsBack(PiBaseButtons):
-    pass
+    def rewind_5s(self):
+        if self.clock:
+            self.clock.cancel()
+        if self._bwd_position > self.video.position or self._bwd_position == 0:
+            new_position = max(self.video.position - 5, 0)
+            self._bwd_position = new_position
+        else:
+            self._bwd_position = new_position = self._bwd_position - 5
+        duration = self.video.duration
+        self.video.seek(new_position / duration)
+        self.clock = Clock.schedule_once(lambda _: self.clock(), 2)
 
 class ButtonRewindFiveSecondsForward(PiBaseButtons):
-    pass
+    def forward_5s(self):
+        if self.clock:
+            self.clock.cancel()
+        if self._fwd_position < self.video.position:
+            new_position = min(self.video.position + 5, self.video.duration)
+            self._fwd_position = new_position
+        else:
+            self._fwd_position = new_position = self._fwd_position + 5
+        duration = self.video.duration
+        self.video.seek(new_position / duration)
+        self.clock = Clock.schedule_once(lambda _: self.clock(), 2)
 
 class ButtonRewindBack(PiBaseButtons):
     pass
@@ -132,24 +158,10 @@ class PiVideoPlayer(Video):
         self.ids.button_box.ids.start_time.text = "%02d:%02d:%02d" % (start_hours, start_minutes, start_seconds)
         self.ids.button_box.ids.end_time.text = "%02d:%02d:%02d" % (end_hours, end_minutes, end_seconds)
 
-    def get_duration(self, *args):
-        # get duration, not available until video is loaded
-        duration = self.duration
-
-    def rewind_5s(self):
-        new_position = max((self.position - 5)/self.duration, 0)
-        self.seek(new_position)
-
-    def forward_5s(self):
-        new_position = min((self.position + 5)/self.duration, 1)
-        self.seek(new_position)
-
-
 class MainApp(MDApp):
     title = "Pi Video Player"
 
     def build(self):
-        # container = PiPlayerContainer()
         player = PiVideoPlayer(
             source="videos/Marvel_Studios_Doctor_Strange_Trailer.mp4",
             state='play',
@@ -158,28 +170,7 @@ class MainApp(MDApp):
             volume=0.1,
             keep_ratio=False,
         )
-        # container.add_widget(player)
         return player
 
 if __name__ == '__main__':
     MainApp().run()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-""" TypeError: Properties ['height_factor'] passed to __init__ may not be existing property names. Valid properties are ['_background_origin', '_background_x',
- '_background_y', '_md_bg_color', '_origin_line_color', '_origin_md_bg_color', 'adaptive_height', 'adaptive_size', 'adaptive_width', 'angle', 'background',
-   'background_hue', 'background_origin', 'background_palette', 'center', 'center_x', 'center_y', 'children', 'cls', 'device_ios', 'disabled', 'height', 'id',
-     'ids', 'line_color', 'line_width', 'md_bg_color', 'motion_filter', 'opacity', 'opposite_colors', 'parent', 'pos', 'pos_hint', 'radius', 'right', 'size',
-       'size_hint', 'size_hint_max', 'size_hint_max_x', 'size_hint_max_y', 'size_hint_min', 'size_hint_min_x',
- 'size_hint_min_y', 'size_hint_x', 'size_hint_y', 'specific_secondary_text_color', 'specific_text_color', 'theme_cls', 'top', 'widget_style', 'width', 'x', 'y']"""
